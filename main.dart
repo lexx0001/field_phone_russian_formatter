@@ -25,7 +25,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyAppState extends ChangeNotifier {}
+class MyAppState extends ChangeNotifier {
+  String phoneNumber = '';
+
+  bool get isPhoneNumberComplete => phoneNumber.length == 18; // Проверяем полную длину номера
+
+  void updatePhoneNumber(String value) {
+    phoneNumber = value;
+    notifyListeners(); // Уведомляем, что состояние изменилось
+  }
+}
 
 class MyHomePage extends StatelessWidget {
   @override
@@ -42,10 +51,13 @@ class MyHomePage extends StatelessWidget {
             FieldAuth(),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                print('button pressed!');
-              },
-              child: Text('далее'),
+              onPressed: appState.isPhoneNumberComplete
+                  ? () {
+                      // Действие при нажатии на кнопку
+                      print('Phone number: ${appState.phoneNumber}');
+                    }
+                  : null,
+              child: const Text('Далее'),
             )
           ],
         ),
@@ -55,20 +67,47 @@ class MyHomePage extends StatelessWidget {
 }
 
 
-class FieldAuth extends StatelessWidget {
-  const FieldAuth({
-    super.key,
-  });
+class FieldAuth extends StatefulWidget {
+  const FieldAuth({super.key});
+
+  @override
+  State<FieldAuth> createState() => _FieldAuthState();
+}
+
+class _FieldAuthState extends State<FieldAuth> {
+  final FocusNode focusNode = FocusNode();
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final appState = context.read<MyAppState>();
+    _controller = TextEditingController(text: appState.phoneNumber);
+
+    // Слушаем изменения текста в контроллере
+    _controller.addListener(() {
+      final currentText = _controller.text;
+
+      // Обновляем состояние только при изменении текста
+      if (appState.phoneNumber != currentText) {
+        appState.updatePhoneNumber(currentText);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    final FocusNode focusNode = FocusNode();
-
     // Устанавливаем фокус при построении виджета
     WidgetsBinding.instance.addPostFrameCallback((_) {
       focusNode.requestFocus();
-    });    
+    });
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -82,12 +121,13 @@ class FieldAuth extends StatelessWidget {
               color: Colors.grey.withAlpha((0.5 * 255).toInt()),
               spreadRadius: 2,
               blurRadius: 5,
-              offset: Offset(0, 3), // changes position of shadow
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: TextField(
-          focusNode: focusNode, //Привязываем фокус к полю
+          controller: _controller,
+          focusNode: focusNode,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -110,6 +150,7 @@ class FieldAuth extends StatelessWidget {
     );
   }
 }
+
 
 
 
