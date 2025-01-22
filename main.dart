@@ -154,6 +154,8 @@ class _FieldAuthState extends State<FieldAuth> {
 
 
 
+import 'package:flutter/services.dart';
+
 class PhoneFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -163,22 +165,31 @@ class PhoneFormatter extends TextInputFormatter {
     // Удаляем все символы, кроме цифр
     String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
 
-    // Если первый символ не +, 7, 8 или 9, не обрабатываем
+    // Если первый символ не +, 7, 8 или 9, игнорируем
     if (newValue.text.isNotEmpty &&
         !['+', '7', '8', '9'].contains(newValue.text[0])) {
-      return oldValue; // Возвращаем предыдущее значение
+      return oldValue;
     }
 
-    // Если первый символ "+", оставляем его без добавления "7"
+    // Если пользователь ввел только "+", оставляем его без добавления "7"
     if (newValue.text.startsWith('+') && newValue.text.length == 1) {
       return newValue;
     }
 
-    // Логика обработки первых символов
+    // Проверяем, пытается ли пользователь удалить символ не с конца строки
+    if (newValue.selection.baseOffset < newValue.text.length) {
+      // Очищаем поле, если удаление не с конца строки
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    // Заменяем 8 на 7, если это первый символ
     if (digits.startsWith('8')) {
-      digits = '7${digits.substring(1)}'; // Заменяем 8 на 7
+      digits = '7${digits.substring(1)}';
     } else if (digits.startsWith('9')) {
-      digits = '7$digits'; // Добавляем 7 перед 9
+      digits = '7$digits';
     }
 
     // Формируем маску +7 (XXX) XXX-XX-XX
@@ -195,16 +206,12 @@ class PhoneFormatter extends TextInputFormatter {
     if (digits.length > 9) {
       formattedNumber += '-${digits.substring(9, digits.length > 11 ? 11 : digits.length)}';
     }
-    if (digits.length > 1 && digits[1] != '9') {
-      return oldValue; // Игнорируем ввод
-    }
 
-
-    // Возвращаем отформатированный номер
     return TextEditingValue(
       text: formattedNumber,
       selection: TextSelection.collapsed(offset: formattedNumber.length),
     );
   }
 }
+
 
