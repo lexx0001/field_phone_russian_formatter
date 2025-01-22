@@ -154,8 +154,6 @@ class _FieldAuthState extends State<FieldAuth> {
 
 
 
-import 'package:flutter/services.dart';
-
 class PhoneFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -192,6 +190,11 @@ class PhoneFormatter extends TextInputFormatter {
       digits = '7$digits';
     }
 
+    // Проверяем вторую цифру (после 7), она должна быть "9"
+    if (digits.length > 1 && digits[1] != '9') {
+      return oldValue; // Игнорируем, если вторая цифра не 9
+    }
+
     // Формируем маску +7 (XXX) XXX-XX-XX
     String formattedNumber = '+7';
     if (digits.length > 1) {
@@ -213,5 +216,4 @@ class PhoneFormatter extends TextInputFormatter {
     );
   }
 }
-
 
